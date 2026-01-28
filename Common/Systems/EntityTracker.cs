@@ -13,12 +13,26 @@ namespace Shepherd.Common.Systems
     /// </summary>
     public class EntityTracker : ModSystem
     {
-        // Timer for debugging
+        /// <summary>
+        /// Timer for debugging.
+        /// </summary>
         private int debug_timer = 0;
         
-        // Closest entity to the LocalPlayer
+        /// <summary>
+        /// Closest entity to the Main.LocalPlayer.
+        /// </summary>
         private Entity closest_entity;
+
+        /// <summary>
+        /// Distance of the entity closest to the Main.LocalPlayer.
+        /// </summary>
         private float closest_entity_distance;
+
+        /// <summary>
+        /// Retrieves a boolean on whether there is a currently tracked active entity.
+        /// Returns true if <c>closest_entity</c> is not null and is active. False otherwise.
+        /// </summary>
+        private bool HasActiveClosestEntity => closest_entity?.active == true;
 
         /// <summary>
         /// EntityTracker constructor.
