@@ -1,0 +1,8 @@
+# Ignore compiled and temporary files
+
+bin/
+obj/
+*.tmod
+*.log
+*.cache
+*.user
