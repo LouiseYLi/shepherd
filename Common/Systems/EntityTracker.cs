@@ -18,6 +18,7 @@ namespace Shepherd.Common.Systems
         
         // Closest entity to the LocalPlayer
         private Entity closest_entity;
+        private float closest_entity_distance;
 
         /// <summary>
         /// EntityTracker constructor.
@@ -43,8 +44,16 @@ namespace Shepherd.Common.Systems
                     if (IsCloser(npc))
                     {
                         SetClosestEntity(npc);
-                        Main.NewText($"Closest NPC: {npc.FullName}");
+                        
                     }
+                }
+
+                if (closest_entity != null && closest_entity.active && closest_entity is NPC closest_NPC)
+                {
+                    Main.NewText($"Closest NPC: {closest_NPC.FullName}");
+                } else
+                {
+                    Main.NewText($"No NPCs found.");
                 }
             }
 
@@ -56,6 +65,7 @@ namespace Shepherd.Common.Systems
         public void SetClosestEntity(Entity e)
         {
             closest_entity = e;
+            closest_entity_distance = CalculateDistance(e);
         }
         
         /// <summary>
@@ -77,7 +87,7 @@ namespace Shepherd.Common.Systems
             }
 
             // Returns whether e is closer than closest_entity
-            return CalculateDistance(e) < CalculateDistance(closest_entity);
+            return CalculateDistance(e) < closest_entity_distance;
         } 
 
         /// <summary>
