@@ -14,6 +14,16 @@ namespace Shepherd.Common.Systems
     public class EntityTracker : ModSystem
     {
         /// <summary>
+        /// Maximum number of tracked entities.
+        /// </summary>
+        private const int MaxTrackedEntities = 10;
+        
+        /// <summary>
+        /// ScanEntity() interval.
+        /// </summary>
+        private const int ScanEntityInterval = 180;
+
+        /// <summary>
         /// Timer for debugging.
         /// </summary>
         private int debug_timer = 0;
@@ -22,11 +32,6 @@ namespace Shepherd.Common.Systems
         /// Closest entity to the Main.LocalPlayer.
         /// </summary>
         private Entity closest_entity;
-
-        /// <summary>
-        /// Distance of the entity closest to the Main.LocalPlayer.
-        /// </summary>
-        private float closest_entity_distance;
 
         /// <summary>
         /// Retrieves a boolean on whether there is a currently tracked active entity.
@@ -48,29 +53,37 @@ namespace Shepherd.Common.Systems
         public override void PostUpdateEverything()
         {
             debug_timer++;
-            if (debug_timer > 180)
+            if (debug_timer > ScanEntityInterval)
             {
-                Main.NewText($"Player position: {Main.LocalPlayer.Center}");
+                ScanEntity();
                 debug_timer = 0;
+            }
 
-                foreach (NPC npc in Main.ActiveNPCs) {
-                    // npc is closer to the LocalPlayer than closest_entity
-                    if (IsCloser(npc))
-                    {
-                        SetClosestEntity(npc);
-                        
-                    }
-                }
+        }
 
-                if (closest_entity != null && closest_entity.active && closest_entity is NPC closest_NPC)
+        /// <summary>
+        /// Scans active NPCs to find the closest NPC to Main.LocalPlayer.
+        /// </summary>
+        private void ScanEntity()
+        {
+            Main.NewText($"Player position: {Main.LocalPlayer.Center}");
+
+            foreach (NPC npc in Main.ActiveNPCs) {
+                // npc is closer to the LocalPlayer than closest_entity
+                if (IsCloser(npc))
                 {
-                    Main.NewText($"Closest NPC: {closest_NPC.FullName}");
-                } else
-                {
-                    Main.NewText($"No NPCs found.");
+                    SetClosestEntity(npc);
+                    Main.NewText($"Reassigned closest_entity to: {npc.FullName}");
                 }
             }
 
+            if (HasActiveClosestEntity && closest_entity is NPC closest_NPC)
+            {
+                Main.NewText($"Closest NPC: {closest_NPC.FullName}");
+            } else
+            {
+                Main.NewText($"No NPCs found.");
+            }
         }
 
         /// <summary>
@@ -79,7 +92,6 @@ namespace Shepherd.Common.Systems
         public void SetClosestEntity(Entity e)
         {
             closest_entity = e;
-            closest_entity_distance = CalculateDistance(e);
         }
         
         /// <summary>
@@ -95,13 +107,13 @@ namespace Shepherd.Common.Systems
         public bool IsCloser(Entity e)
         {
             // Null check
-            if (closest_entity == null || !closest_entity.active)
+            if (!HasActiveClosestEntity)
             {
                 return true;
             }
 
             // Returns whether e is closer than closest_entity
-            return CalculateDistance(e) < closest_entity_distance;
+            return CalculateDistance(e) < CalculateDistance(closest_entity);
         } 
 
         /// <summary>
