@@ -1,9 +1,11 @@
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using ReLogic.Content;
 using Shepherd.Common.Enums;
 using System;
 using System.Collections.Generic;
 using Terraria;
 using Terraria.ModLoader;
-using Microsoft.Xna.Framework;
 
 /// <summary>
 /// Contains systems responsible for entity tracking.
@@ -64,6 +66,25 @@ namespace Shepherd.Common.Systems
             // TODO: remove this after debugging
             // should track only zombies
             PinnedEntities[EntityType.NPC].Add(3);
+        }
+
+        public override void OnWorldLoad()
+        {
+            // Clear the tracker when entering a world
+            // ClearTracker();
+        }
+
+        public override void OnWorldUnload()
+        {
+            // Clear the tracker when leaving a world to prevent memory leaks
+            ClearTracker();
+        }
+
+        private void ClearTracker()
+        {
+            closest_entity = null;
+            debug_timer = 0;
+            PinnedEntities[EntityType.NPC].Clear();
         }
 
         /// <summary>
@@ -131,6 +152,30 @@ namespace Shepherd.Common.Systems
         }
 
         /// <summary>
+        /// Returns whether there is an active entity.
+        /// </summary>
+        /// <returns>
+        /// True if there is an active entity.
+        /// False otherwise.
+        /// </returns>
+        public bool GetHasActiveClosestEntity()
+        {
+            return HasActiveClosestEntity;
+        }
+
+
+        /// <summary>
+        /// Gets the entity closest to the player.
+        /// </summary>
+        /// <returns>
+        /// <c>closest_entity</c>.
+        /// </returns>
+        public Entity GetClosestEntity()
+        {
+            return closest_entity;
+        }
+
+        /// <summary>
         /// Sets the <c>closest_entity</c> to <paramref name="e"/>.
         /// </summary>
         private void SetClosestEntity(Entity e)
@@ -177,7 +222,60 @@ namespace Shepherd.Common.Systems
 
 
 
+        /// <summary>
+        /// Draws navigational arrows when ready.
+        /// </summary>
+        public override void PostDrawTiles()
+        {
+            if (!HasActiveClosestEntity)
+                return;
 
+            DrawArrowToEntity();
+        }
+
+        /// <summary>
+        /// Draws navigational arrow to entity.
+        /// </summary>
+        private void DrawArrowToEntity()
+        {
+            var arrowTexture = ModContent.Request<Texture2D>("Shepherd/Assets/arrow");
+
+            // if (arrowTexture == null || !arrowTexture.IsLoaded)
+            // {
+            //     Main.NewText("arrow text not loaded");
+            //     return;
+            // }
+            // Main.NewText("drawing arrow");
+
+            SpriteBatch spriteBatch = Main.spriteBatch;
+
+            spriteBatch.Begin();
+
+            Vector2 playerPos = Main.LocalPlayer.Center;
+            Vector2 closestEntityPos = closest_entity.Center;
+            Vector2 direction = closestEntityPos - playerPos;
+
+            float rotation = direction.ToRotation() + MathHelper.PiOver2;
+            // float rotation = direction.ToRotation();
+
+            Vector2 arrowPosition = playerPos + Vector2.Normalize(direction) * 50f;
+
+            Vector2 screenPos = arrowPosition - Main.screenPosition;
+
+            spriteBatch.Draw(
+                arrowTexture.Value,
+                screenPos,
+                null,
+                Color.White,
+                rotation,
+                arrowTexture.Value.Size() / 2f,  // Origin (center of sprite)
+                1f,  // Scale
+                SpriteEffects.None,
+                0f
+            );
+
+            spriteBatch.End();
+        }
 
         /*
             Runs before entities update
